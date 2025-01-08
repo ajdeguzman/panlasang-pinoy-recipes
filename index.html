@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panlasang Pinoy Recipes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen">
+    <div class="container mx-auto bg-white shadow-lg rounded-lg p-6">
+        <h1 class="text-4xl font-bold text-center mb-10">Panlasang Pinoy Recipes</h1>
+        <div class="grid grid-cols-2 gap-6" id="categoryButtons">
+            <!-- Buttons will be dynamically added here -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch('https://raw.githubusercontent.com/ajdeguzman/panlasang-pinoy-recipes/main/Panlasang%20Pinoy%20Recipes.csv')
+                .then(response => response.text())
+                .then(csv => {
+                    const rows = csv.trim().split('\n').slice(1);
+                    const categories = {};
+
+                    rows.forEach(row => {
+                        const cols = row.split(/,(?=(?:[^"']*"[^"']*")*[^"']*$)/);
+                        const recipe_name = cols[0].replace(/"/g, '').trim();
+                        const course_type = cols[1]?.replace(/"/g, '').trim();
+                        const link_url = cols[2]?.replace(/"/g, '').trim();
+
+                        if (course_type) {
+                            if (!categories[course_type]) {
+                                categories[course_type] = [];
+                            }
+                            categories[course_type].push({ recipe_name, link_url });
+                        }
+                    });
+
+                    const buttonGroup = document.getElementById('categoryButtons');
+
+                    Object.keys(categories).forEach(category => {
+                        const button = document.createElement('button');
+                        button.textContent = category;
+                        button.className = "bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded";
+                        button.onclick = () => {
+                            const categoryData = encodeURIComponent(JSON.stringify(categories[category]));
+                            const linkUrls = encodeURIComponent(JSON.stringify(categories[category].map(item => item.link_url)));
+                            window.location.href = `recipes.html?category=${category}&data=${categoryData}&links=${linkUrls}`;
+                        };
+                        buttonGroup.appendChild(button);
+                    });
+                })
+                .catch(error => console.error('Error loading CSV:', error));
+        });
+    </script>
+</body>
+</html>
