@@ -16,22 +16,20 @@
     </div>
 
     <script>
-        let csvData = [];
-
         function loadCSVAndDisplayRecipes() {
             fetch('https://raw.githubusercontent.com/ajdeguzman/panlasang-pinoy-recipes/main/Panlasang%20Pinoy%20Recipes.csv')
                 .then(response => response.text())
                 .then(csv => {
                     const rows = csv.trim().split('\n').slice(1);
-                    rows.forEach(row => {
+                    const recipes = rows.map(row => {
                         const cols = row.split(/,(?=(?:[^"']*"[^"']*")*[^"']*$)/);
-                        csvData.push({
+                        return {
                             recipe_name: cols[0].replace(/"/g, '').trim(),
                             course_type: cols[1]?.replace(/"/g, '').trim(),
                             link_url: cols[2]?.replace(/"/g, '').trim()
-                        });
+                        };
                     });
-                    displayRecipes();
+                    displayRecipes(recipes);
                 })
                 .catch(error => {
                     console.error('Error loading CSV:', error);
@@ -39,26 +37,29 @@
                 });
         }
 
-        function displayRecipes() {
+        function displayRecipes(recipes) {
             const params = new URLSearchParams(window.location.search);
             const category = params.get('category');
-            const data = JSON.parse(decodeURIComponent(params.get('data')));
 
             document.getElementById('categoryTitle').textContent = category ? `${category} Recipes` : 'All Recipes';
 
             const recipeList = document.getElementById('recipeList');
             recipeList.innerHTML = ''; // Clear existing items
 
-            data.forEach(item => {
-                const matchedRecipe = csvData.find(recipe => 
-                    recipe.recipe_name.toLowerCase() === item.recipe_name.toLowerCase()
-                );
-                
+            // Filter recipes by category if specified
+            const filteredRecipes = category 
+                ? recipes.filter(recipe => recipe.course_type.toLowerCase() === category.toLowerCase())
+                : recipes;
+
+            // Sort recipes alphabetically
+            filteredRecipes.sort((a, b) => a.recipe_name.localeCompare(b.recipe_name));
+
+            filteredRecipes.forEach(recipe => {
                 const listItem = document.createElement('li');
                 const link = document.createElement('a');
                 
-                if (matchedRecipe && matchedRecipe.link_url) {
-                    link.href = matchedRecipe.link_url;
+                if (recipe.link_url) {
+                    link.href = recipe.link_url;
                     link.target = "_blank";
                     link.className = "text-blue-500 hover:underline";
                 } else {
@@ -67,10 +68,15 @@
                     link.title = "Recipe link not available";
                 }
                 
-                link.textContent = item.recipe_name;
+                link.textContent = recipe.recipe_name;
                 listItem.appendChild(link);
                 recipeList.appendChild(listItem);
             });
+
+            // Show message if no recipes found for category
+            if (filteredRecipes.length === 0) {
+                recipeList.innerHTML = '<li class="text-gray-500">No recipes found for this category.</li>';
+            }
         }
 
         function goBack() {
