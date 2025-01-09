@@ -45,7 +45,7 @@
                         button.onclick = () => {
                             const categoryData = encodeURIComponent(JSON.stringify(categories[category]));
                             const linkUrls = encodeURIComponent(JSON.stringify(categories[category].map(item => item.link_url)));
-                            window.location.href = `recipes.html?category=${category}&data=${categoryData}&links=${linkUrls}`;
+                            window.location.href = `recipes.html?category=${category}`;
                         };
                         buttonGroup.appendChild(button);
                     });
